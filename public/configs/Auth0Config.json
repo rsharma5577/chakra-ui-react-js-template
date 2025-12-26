@@ -1,0 +1,12 @@
+{
+  "domain": "telna-eng.us.auth0.com",
+  "clientId": "tnpMy12pts4k3f1FJeYE3tk3p803M9Ib",
+  "authorizationParams": {
+    "redirect_uri": "http://localhost:5173",
+    "audience": "https://eng-cronus.telna.com/apis",
+    "scope": "openid profile email offline_access"
+  },
+  "cacheLocation": "localstorage",
+  "useRefreshTokens": true,
+  "useRefreshTokensFallback": true
+}
