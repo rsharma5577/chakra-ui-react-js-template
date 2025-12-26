@@ -2,7 +2,7 @@
  * DataTable - TanStack Table wrapper component with server-side sorting and pagination
  * Designed to be a drop-in replacement for ResponsiveTableV2 from react-table 6.8.6
  */
-import { ReactNode, useEffect, useMemo } from 'react';
+import { ReactNode, useEffect, useMemo, useCallback, memo } from 'react';
 import {
   useReactTable,
   getCoreRowModel,
@@ -152,22 +152,25 @@ export function DataTable<TData extends RowData>({
     }));
   }, [sorted]);
 
-  // Handle sorting change
-  const handleSortingChange: OnChangeFn<SortingState> = updater => {
-    const newSorting = typeof updater === 'function' ? updater(sortingState) : updater;
+  // Handle sorting change - memoized to prevent unnecessary re-renders
+  const handleSortingChange: OnChangeFn<SortingState> = useCallback(
+    updater => {
+      const newSorting = typeof updater === 'function' ? updater(sortingState) : updater;
 
-    // Find the column to get sortKey if exists
-    const sortedColumn = columns.find(
-      col => String(col.accessor) === newSorting[0]?.id || col.sortKey === newSorting[0]?.id,
-    );
+      // Find the column to get sortKey if exists
+      const sortedColumn = columns.find(
+        col => String(col.accessor) === newSorting[0]?.id || col.sortKey === newSorting[0]?.id,
+      );
 
-    const newSorted: SortConfig[] = newSorting.map(s => ({
-      id: sortedColumn?.sortKey ?? s.id,
-      desc: s.desc,
-    }));
+      const newSorted: SortConfig[] = newSorting.map(s => ({
+        id: sortedColumn?.sortKey ?? s.id,
+        desc: s.desc,
+      }));
 
-    requestData(pageSize, page, newSorted);
-  };
+      requestData(pageSize, page, newSorted);
+    },
+    [columns, sortingState, pageSize, page, requestData],
+  );
 
   // Initialize TanStack table
   const table = useReactTable({
@@ -192,17 +195,23 @@ export function DataTable<TData extends RowData>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    if (newPage >= 0 && newPage < pages) {
-      requestData(pageSize, newPage, sorted);
-    }
-  };
+  // Handle page change - memoized
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      if (newPage >= 0 && newPage < pages) {
+        requestData(pageSize, newPage, sorted);
+      }
+    },
+    [pages, pageSize, sorted, requestData],
+  );
 
-  // Handle page size change
-  const handlePageSizeChange = (newPageSize: number) => {
-    requestData(newPageSize, 0, sorted);
-  };
+  // Handle page size change - memoized
+  const handlePageSizeChange = useCallback(
+    (newPageSize: number) => {
+      requestData(newPageSize, 0, sorted);
+    },
+    [sorted, requestData],
+  );
 
   // Calculate display total
   const displayTotal = totalRows ?? data.length;
@@ -380,4 +389,5 @@ export function DataTable<TData extends RowData>({
   );
 }
 
-export default DataTable;
+// Memoize DataTable to prevent unnecessary re-renders when props haven't changed
+export default memo(DataTable) as typeof DataTable;

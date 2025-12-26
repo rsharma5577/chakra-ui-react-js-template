@@ -1,5 +1,5 @@
 // Root Layout - Wraps entire application
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, memo, useMemo } from 'react';
 import { Outlet, useNavigation, useMatches, ScrollRestoration } from 'react-router-dom';
 import { Box, Progress } from '@chakra-ui/react';
 import { Spinner } from '@/components';
@@ -12,15 +12,16 @@ interface RouteHandle {
   breadcrumb?: string;
 }
 
-// Loading spinner for Suspense
-const PageLoader = () => (
+// Loading spinner for Suspense - memoized to prevent re-renders
+const PageLoader = memo(() => (
   <Box display='flex' justifyContent='center' alignItems='center' minH='100vh'>
     <Spinner size='xl' />
   </Box>
-);
+));
+PageLoader.displayName = 'PageLoader';
 
-// Global loading bar for navigation
-const NavigationProgress = () => {
+// Global loading bar for navigation - memoized
+const NavigationProgress = memo(() => {
   const navigation = useNavigation();
   const isLoading = navigation.state === 'loading';
 
@@ -44,27 +45,32 @@ const NavigationProgress = () => {
       </Progress.Track>
     </Progress.Root>
   );
-};
+});
+NavigationProgress.displayName = 'NavigationProgress';
 
 export const RootLayout = () => {
   const matches = useMatches();
   const navigation = useNavigation();
 
+  // Memoize current match to avoid recalculation
+  const currentMatch = useMemo(() => matches[matches.length - 1], [matches]);
+  const handle = useMemo(() => currentMatch.handle as RouteHandle, [currentMatch]);
+
   // Update document title based on route
   useEffect(() => {
-    const currentMatch = matches[matches.length - 1];
-    const handle = currentMatch.handle as RouteHandle;
-
     if (handle.title) {
       document.title = `${handle.title} | Your App`;
     } else {
       document.title = 'Your App';
     }
-  }, [matches]);
+  }, [handle.title]);
 
-  // Get current route state
-  const isNavigating = navigation.state !== 'idle';
-  const isSubmitting = navigation.state === 'submitting';
+  // Get current route state - memoized
+  const navigationState = useMemo(() => {
+    const isNavigating = navigation.state !== 'idle';
+    const isSubmitting = navigation.state === 'submitting';
+    return { isNavigating, isSubmitting };
+  }, [navigation.state]);
 
   return (
     <AuthProvider>
@@ -76,9 +82,9 @@ export const RootLayout = () => {
 
       {/* Page content with Suspense for lazy loading */}
       <Box
-        opacity={isNavigating && !isSubmitting ? 0.7 : 1}
+        opacity={navigationState.isNavigating && !navigationState.isSubmitting ? 0.7 : 1}
         transition='opacity 0.2s'
-        pointerEvents={isNavigating ? 'none' : 'auto'}
+        pointerEvents={navigationState.isNavigating ? 'none' : 'auto'}
       >
         <Suspense fallback={<PageLoader />}>
           <Outlet />

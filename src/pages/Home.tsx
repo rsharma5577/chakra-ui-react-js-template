@@ -1,5 +1,5 @@
 // Home page component - Public landing page
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, memo } from 'react';
 import {
   Box,
   Button,
@@ -34,7 +34,7 @@ interface LocationState {
   };
 }
 
-const Home = () => {
+const HomeComponent = () => {
   const [count, setCount] = useState(0);
   const navigate = useNavigate();
   const location = useLocation();
@@ -48,6 +48,16 @@ const Home = () => {
 
   // Use intended destination if available, otherwise default to dashboard
   const loginReturnTo = intendedDestination ?? DEFAULT_AUTHENTICATED_REDIRECT;
+
+  // Memoize count increment handler
+  const handleIncrement = useCallback(() => {
+    setCount(prev => prev + 1);
+  }, []);
+
+  // Memoize scroll handler
+  const handleScrollToAbout = useCallback(() => {
+    document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
 
   // Redirect authenticated users to dashboard
   useEffect(() => {
@@ -200,13 +210,7 @@ const Home = () => {
               <LoginButton returnTo={loginReturnTo} size='lg'>
                 Get Started
               </LoginButton>
-              <Button
-                variant='outline'
-                size='lg'
-                onClick={() => {
-                  document.getElementById('about')?.scrollIntoView({ behavior: 'smooth' });
-                }}
-              >
+              <Button variant='outline' size='lg' onClick={handleScrollToAbout}>
                 Learn More
               </Button>
             </HStack>
@@ -288,14 +292,7 @@ const Home = () => {
             <Card.Root maxW='md' w='full'>
               <Card.Body>
                 <VStack gap={4}>
-                  <Button
-                    onClick={() => {
-                      setCount(count => count + 1);
-                    }}
-                    colorPalette='blue'
-                    size='lg'
-                    w='full'
-                  >
+                  <Button onClick={handleIncrement} colorPalette='blue' size='lg' w='full'>
                     Count is {count}
                   </Button>
                   <Text textAlign='center' color='gray.600'>
@@ -325,5 +322,6 @@ const Home = () => {
   );
 };
 
-export { Home };
+// Memoize the component to prevent unnecessary re-renders
+export const Home = memo(HomeComponent);
 export default Home;

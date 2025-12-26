@@ -17,6 +17,9 @@ import { PermissionGuard } from './guards';
 import { RootErrorBoundary } from './errors/RootErrorBoundary';
 import { RouteErrorBoundary } from './errors/RouteErrorBoundary';
 
+// Route Utilities
+import { LazyRoute } from './utils';
+
 // Domain Routes
 import { wholesaleProvisioningRoutes } from '@/domains/wholesale-provisioning/routes';
 
@@ -82,7 +85,7 @@ export const router = createBrowserRouter([
       // ========================================
       {
         index: true,
-        element: <HomePage />,
+        element: <LazyRoute component={HomePage} />,
         handle: {
           title: 'Home',
           description: 'Welcome to our application',
@@ -93,7 +96,7 @@ export const router = createBrowserRouter([
       // Auth callback route (handles OAuth redirect)
       {
         path: 'callback',
-        element: <AuthCallbackPage />,
+        element: <LazyRoute component={AuthCallbackPage} />,
         handle: {
           title: 'Authenticating',
           isPublic: true,
@@ -103,7 +106,7 @@ export const router = createBrowserRouter([
       // Example usage / demo page (public)
       {
         path: 'example',
-        element: <ExampleUsagePage />,
+        element: <LazyRoute component={ExampleUsagePage} />,
         handle: {
           title: 'API Demo',
           description: 'JSONPlaceholder API integration demo',
@@ -126,7 +129,7 @@ export const router = createBrowserRouter([
             children: [
               {
                 path: 'dashboard',
-                element: <DashboardPage />,
+                element: <LazyRoute component={DashboardPage} />,
                 loader: dashboardLoader,
                 handle: {
                   title: 'Dashboard',
@@ -136,7 +139,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'profile',
-                element: <ProfilePage />,
+                element: <LazyRoute component={ProfilePage} />,
                 loader: profileLoader,
                 handle: {
                   title: 'Profile',
@@ -146,7 +149,7 @@ export const router = createBrowserRouter([
               },
               {
                 path: 'settings',
-                element: <SettingsPage />,
+                element: <LazyRoute component={SettingsPage} />,
                 loader: settingsLoader,
                 handle: {
                   title: 'Settings',
@@ -178,7 +181,7 @@ export const router = createBrowserRouter([
       // ========================================
       {
         path: '*',
-        element: <NotFoundPage />,
+        element: <LazyRoute component={NotFoundPage} />,
         handle: {
           title: 'Page Not Found',
           isPublic: true,
