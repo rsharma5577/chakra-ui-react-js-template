@@ -2,7 +2,7 @@
  * TablePagination - Reusable pagination component for tables
  * Provides page navigation, page size selection, and row count display
  */
-import { memo } from 'react';
+import { memo, useCallback } from 'react';
 import { Flex, Text, NativeSelect, Input, IconButton, HStack } from '@chakra-ui/react';
 import { LuChevronLeft, LuChevronRight, LuChevronsLeft, LuChevronsRight } from 'react-icons/lu';
 
@@ -40,10 +40,28 @@ export interface TablePaginationProps {
 }
 
 // ============================================================================
+// Helper Functions
+// ============================================================================
+
+const getSafePage = (newPage: number, currentPage: number, totalPages: number): number => {
+  if (isNaN(newPage)) {
+    return currentPage;
+  }
+  return Math.min(Math.max(newPage, 0), Math.max(totalPages - 1, 0));
+};
+
+const formatRowRange = (from: number, to: number, total: number): string => {
+  if (total === 0) {
+    return '0';
+  }
+  return `${from.toLocaleString()}-${to.toLocaleString()} rows`;
+};
+
+// ============================================================================
 // Component
 // ============================================================================
 
-export const TablePagination = memo(function TablePagination({
+function TablePaginationComponent({
   page,
   pageSize,
   pages,
@@ -61,47 +79,66 @@ export const TablePagination = memo(function TablePagination({
   // Calculate display values
   const fromRows = totalRows === 0 ? 0 : page * pageSize + 1;
   const toRows = Math.min((page + 1) * pageSize, totalRows);
+  const rowRangeText = formatRowRange(fromRows, toRows, totalRows);
 
   // Navigation state
   const canPrevious = page > 0;
   const canNext = page < pages - 1;
 
-  // Safe page calculation
-  const getSafePage = (newPage: number): number => {
-    if (isNaN(newPage)) {
-      return page;
-    }
-    return Math.min(Math.max(newPage, 0), Math.max(pages - 1, 0));
-  };
-
-  // Handle page change
-  const handlePageChange = (newPage: number) => {
-    const safePage = getSafePage(newPage);
-    if (safePage !== page) {
-      onPageChange(safePage);
-    }
-  };
+  // Handle page change with validation
+  const handlePageChange = useCallback(
+    (newPage: number) => {
+      const safePage = getSafePage(newPage, page, pages);
+      if (safePage !== page) {
+        onPageChange(safePage);
+      }
+    },
+    [page, pages, onPageChange],
+  );
 
   // Handle page size change
-  const handlePageSizeChange = (newPageSize: number) => {
-    onPageSizeChange(newPageSize);
-  };
+  const handlePageSizeChange = useCallback(
+    (newPageSize: number) => {
+      onPageSizeChange(newPageSize);
+    },
+    [onPageSizeChange],
+  );
 
   // Handle page input change
-  const handlePageInputChange = (value: string) => {
-    const pageNum = parseInt(value, 10);
-    if (!isNaN(pageNum)) {
-      handlePageChange(pageNum - 1); // Convert to 0-based index
-    }
-  };
+  const handlePageInputChange = useCallback(
+    (value: string) => {
+      const pageNum = parseInt(value, 10);
+      if (!isNaN(pageNum)) {
+        handlePageChange(pageNum - 1); // Convert to 0-based index
+      }
+    },
+    [handlePageChange],
+  );
 
-  // Handle page input blur/enter
-  const handlePageInputSubmit = (value: string) => {
-    const pageNum = parseInt(value, 10);
-    if (!isNaN(pageNum)) {
-      handlePageChange(pageNum - 1);
-    }
-  };
+  // Handle page input submit (blur/enter)
+  const handlePageInputSubmit = useCallback(
+    (value: string) => {
+      const pageNum = parseInt(value, 10);
+      if (!isNaN(pageNum)) {
+        handlePageChange(pageNum - 1);
+      }
+    },
+    [handlePageChange],
+  );
+
+  // Navigation handlers
+  const handleFirstPage = useCallback(() => {
+    handlePageChange(0);
+  }, [handlePageChange]);
+  const handlePreviousPage = useCallback(() => {
+    handlePageChange(page - 1);
+  }, [handlePageChange, page]);
+  const handleNextPage = useCallback(() => {
+    handlePageChange(page + 1);
+  }, [handlePageChange, page]);
+  const handleLastPage = useCallback(() => {
+    handlePageChange(pages - 1);
+  }, [handlePageChange, pages]);
 
   return (
     <Flex
@@ -120,9 +157,7 @@ export const TablePagination = memo(function TablePagination({
         minW='180px'
         data-testid={`${testIdPrefix}-total-records`}
       >
-        Viewing{' '}
-        {totalRows === 0 ? '0' : `${fromRows.toLocaleString()}-${toRows.toLocaleString()} rows`} of{' '}
-        {totalRows.toLocaleString()} results
+        Viewing {rowRangeText} of {totalRows.toLocaleString()} results
       </Text>
 
       {/* Right side controls */}
@@ -202,9 +237,7 @@ export const TablePagination = memo(function TablePagination({
                 aria-label='First page'
                 size='sm'
                 variant='ghost'
-                onClick={() => {
-                  handlePageChange(0);
-                }}
+                onClick={handleFirstPage}
                 disabled={!canPrevious || loading}
                 data-testid={`${testIdPrefix}-first-page`}
               >
@@ -215,9 +248,7 @@ export const TablePagination = memo(function TablePagination({
               aria-label='Previous page'
               size='sm'
               variant='ghost'
-              onClick={() => {
-                handlePageChange(page - 1);
-              }}
+              onClick={handlePreviousPage}
               disabled={!canPrevious || loading}
               data-testid={`${testIdPrefix}-prev-page`}
             >
@@ -227,9 +258,7 @@ export const TablePagination = memo(function TablePagination({
               aria-label='Next page'
               size='sm'
               variant='ghost'
-              onClick={() => {
-                handlePageChange(page + 1);
-              }}
+              onClick={handleNextPage}
               disabled={!canNext || loading}
               data-testid={`${testIdPrefix}-next-page`}
             >
@@ -240,9 +269,7 @@ export const TablePagination = memo(function TablePagination({
                 aria-label='Last page'
                 size='sm'
                 variant='ghost'
-                onClick={() => {
-                  handlePageChange(pages - 1);
-                }}
+                onClick={handleLastPage}
                 disabled={!canNext || loading}
                 data-testid={`${testIdPrefix}-last-page`}
               >
@@ -254,6 +281,8 @@ export const TablePagination = memo(function TablePagination({
       </Flex>
     </Flex>
   );
-});
+}
+
+export const TablePagination = memo(TablePaginationComponent);
 
 export default TablePagination;

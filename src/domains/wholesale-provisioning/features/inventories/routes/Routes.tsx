@@ -3,6 +3,7 @@
 
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
+import { LazyRoute } from '@/routes/utils';
 
 // ============================================
 // Lazy-loaded pages
@@ -24,21 +25,21 @@ const InventoryDetailPage = lazy(
 export const inventoryRoutes: RouteObject[] = [
   {
     index: true,
-    element: <InventoriesListPage />,
+    element: <LazyRoute component={InventoriesListPage} />,
     handle: {
       title: 'Inventories List',
     },
   },
   {
     path: 'create',
-    element: <InventoryCreatePage />,
+    element: <LazyRoute component={InventoryCreatePage} />,
     handle: {
       title: 'Create Inventory',
     },
   },
   {
     path: ':id',
-    element: <InventoryDetailPage />,
+    element: <LazyRoute component={InventoryDetailPage} />,
     handle: {
       title: 'Inventory Details',
     },

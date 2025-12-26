@@ -189,7 +189,7 @@ const columns: TableColumn<BillingGroup>[] = [
     header: 'Billing Group ID',
     width: '140px',
     render: row => (
-      <Link color='orange.500' fontWeight='medium' _hover={{ textDecoration: 'underline' }}>
+      <Link fontWeight='medium' _hover={{ textDecoration: 'underline' }}>
         {row.billingGroupId}
       </Link>
     ),
@@ -199,7 +199,7 @@ const columns: TableColumn<BillingGroup>[] = [
     header: 'Billing Group Name',
     minWidth: '180px',
     render: row => (
-      <Link color='orange.500' _hover={{ textDecoration: 'underline' }}>
+      <Link _hover={{ textDecoration: 'underline' }}>
         {row.billingGroupName}
       </Link>
     ),
@@ -213,9 +213,7 @@ const columns: TableColumn<BillingGroup>[] = [
       const [date, time] = row.dateCreated.split(' ');
       return (
         <Flex gap={1}>
-          <Box as='span' color='orange.500'>
-            {date}
-          </Box>
+          <Box as='span'>{date}</Box>
           <Box as='span' color='gray.400'>
             {time}
           </Box>
@@ -228,7 +226,7 @@ const columns: TableColumn<BillingGroup>[] = [
     header: 'Company ID',
     width: '130px',
     render: row => (
-      <Link color='orange.500' _hover={{ textDecoration: 'underline' }}>
+      <Link _hover={{ textDecoration: 'underline' }}>
         {row.companyId}
       </Link>
     ),
@@ -238,7 +236,7 @@ const columns: TableColumn<BillingGroup>[] = [
     header: 'Company Name',
     minWidth: '160px',
     render: row => (
-      <Link color='teal.500' _hover={{ textDecoration: 'underline' }}>
+      <Link _hover={{ textDecoration: 'underline' }}>
         {row.companyName}
       </Link>
     ),
@@ -248,7 +246,7 @@ const columns: TableColumn<BillingGroup>[] = [
     header: 'Inventory ID',
     width: '120px',
     render: row => (
-      <Link color='orange.500' _hover={{ textDecoration: 'underline' }}>
+      <Link _hover={{ textDecoration: 'underline' }}>
         {row.inventoryId}
       </Link>
     ),

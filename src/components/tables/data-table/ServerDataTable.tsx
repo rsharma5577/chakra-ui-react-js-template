@@ -2,7 +2,7 @@
  * ServerDataTable - Easy-to-use wrapper for DataTable with built-in state management
  * Handles pagination, sorting, and data fetching automatically
  */
-import { useState, useCallback, useEffect, ReactNode } from 'react';
+import { useState, useCallback, useEffect, useMemo, ReactNode, memo } from 'react';
 import { RowData } from '@tanstack/react-table';
 import { DataTable, DataTableColumn, SortConfig } from './DataTable';
 
@@ -89,10 +89,32 @@ export interface ServerDataTableProps<TData extends RowData> {
 }
 
 // ============================================================================
-// Component
+// Helper Functions
 // ============================================================================
 
-export function ServerDataTable<TData extends RowData>({
+const calculateTotalPages = (
+  totalRows: number,
+  pageSize: number,
+  providedPages?: number,
+): number => {
+  return providedPages ?? Math.ceil(totalRows / pageSize);
+};
+
+const createInitialSort = (
+  defaultSortBy?: string,
+  defaultSortOrder?: 'asc' | 'desc',
+): SortConfig[] => {
+  if (!defaultSortBy) {
+    return [];
+  }
+  return [{ id: defaultSortBy, desc: defaultSortOrder === 'desc' }];
+};
+
+// ============================================================================
+// Main Component
+// ============================================================================
+
+function ServerDataTableComponent<TData extends RowData>({
   columns,
   fetchData,
   defaultPageSize = 10,
@@ -116,22 +138,26 @@ export function ServerDataTable<TData extends RowData>({
   const [totalRows, setTotalRows] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [sorted, setSorted] = useState<SortConfig[]>(
-    defaultSortBy ? [{ id: defaultSortBy, desc: defaultSortOrder === 'desc' }] : [],
+    createInitialSort(defaultSortBy, defaultSortOrder),
   );
   const [isInitialized, setIsInitialized] = useState(false);
 
   // Convert simplified columns to DataTable format
-  const tableColumns: DataTableColumn<TData>[] = columns.map(col => ({
-    accessor: col.key,
-    Header: col.header,
-    Cell: col.render ? ({ row, value }) => col.render?.(row.original, value) : undefined,
-    sortable: col.sortable !== false,
-    sortKey: col.sortKey,
-    width: col.width,
-    minWidth: col.minWidth,
-    headerTooltip: col.tooltip,
-    align: col.align,
-  }));
+  const tableColumns: DataTableColumn<TData>[] = useMemo(
+    () =>
+      columns.map(col => ({
+        accessor: col.key,
+        Header: col.header,
+        Cell: col.render ? ({ row, value }) => col.render?.(row.original, value) : undefined,
+        sortable: col.sortable !== false,
+        sortKey: col.sortKey,
+        width: col.width,
+        minWidth: col.minWidth,
+        headerTooltip: col.tooltip,
+        align: col.align,
+      })),
+    [columns],
+  );
 
   // Fetch data handler
   const handleFetchData = useCallback(
@@ -152,7 +178,7 @@ export function ServerDataTable<TData extends RowData>({
 
         setData(result.data);
         setTotalRows(result.totalRows);
-        setTotalPages(result.totalPages ?? Math.ceil(result.totalRows / newPageSize));
+        setTotalPages(calculateTotalPages(result.totalRows, newPageSize, result.totalPages));
       } catch (error) {
         console.error('Failed to fetch data:', error);
         setData([]);
@@ -185,7 +211,7 @@ export function ServerDataTable<TData extends RowData>({
       totalRows={totalRows}
       sorted={sorted}
       requestData={(pageSize, page, sorted) => void handleFetchData(pageSize, page, sorted)}
-      fetchDataOnMount={false} // We handle this ourselves
+      fetchDataOnMount={false}
       noDataText={emptyMessage}
       pageSizeOptions={pageSizeOptions}
       onRowClick={onRowClick}
@@ -208,7 +234,6 @@ export interface UseServerDataTableOptions<TData> {
   defaultSortOrder?: 'asc' | 'desc';
 }
 
-// eslint-disable-next-line
 export function useServerDataTable<TData>({
   fetchData,
   defaultPageSize = 10,
@@ -222,7 +247,7 @@ export function useServerDataTable<TData>({
   const [totalRows, setTotalRows] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
   const [sorted, setSorted] = useState<SortConfig[]>(
-    defaultSortBy ? [{ id: defaultSortBy, desc: defaultSortOrder === 'desc' }] : [],
+    createInitialSort(defaultSortBy, defaultSortOrder),
   );
 
   const requestData = useCallback(
@@ -243,10 +268,12 @@ export function useServerDataTable<TData>({
 
         setData(result.data);
         setTotalRows(result.totalRows);
-        setTotalPages(result.totalPages ?? Math.ceil(result.totalRows / newPageSize));
+        setTotalPages(calculateTotalPages(result.totalRows, newPageSize, result.totalPages));
       } catch (error) {
         console.error('Failed to fetch data:', error);
         setData([]);
+        setTotalRows(0);
+        setTotalPages(0);
       } finally {
         setLoading(false);
       }
@@ -284,5 +311,7 @@ export function useServerDataTable<TData>({
     },
   };
 }
+
+export const ServerDataTable = memo(ServerDataTableComponent) as typeof ServerDataTableComponent;
 
 export default ServerDataTable;

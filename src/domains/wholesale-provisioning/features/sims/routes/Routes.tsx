@@ -3,6 +3,7 @@
 
 import { lazy } from 'react';
 import { RouteObject } from 'react-router-dom';
+import { LazyRoute } from '@/routes/utils';
 
 // ============================================
 // Lazy-loaded pages
@@ -22,7 +23,7 @@ const SimDetailsPage = lazy(
 export const simRoutes: RouteObject[] = [
   {
     index: true,
-    element: <SimListPage />,
+    element: <LazyRoute component={SimListPage} />,
     handle: {
       title: 'SIMs List',
     },
@@ -30,7 +31,7 @@ export const simRoutes: RouteObject[] = [
 
   {
     path: ':id',
-    element: <SimDetailsPage />,
+    element: <LazyRoute component={SimDetailsPage} />,
     handle: {
       title: 'SIM Details',
     },
